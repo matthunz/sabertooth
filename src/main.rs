@@ -1,8 +1,6 @@
-#![allow(non_snake_case)]
-
-use dioxus_router::prelude::*;
-
 use dioxus::prelude::*;
+use dioxus_material::{NavigationRail, NavigationRailItem, use_theme, use_theme_provider, Theme};
+use dioxus_router::prelude::*;
 use log::LevelFilter;
 
 fn main() {
@@ -15,43 +13,76 @@ fn main() {
 }
 
 fn app(cx: Scope) -> Element {
-    render! {
-        Router::<Route> {}
-    }
+    use_theme_provider(cx, Theme::default());
+
+    render! { Router::<Route> {} }
 }
 
 #[derive(Clone, Routable, Debug, PartialEq)]
 enum Route {
+    #[layout(Nav)]
     #[route("/")]
-    Home {},
-    #[route("/blog/:id")]
-    Blog { id: i32 },
+    Home,
+    #[route("/explore")]
+    Explore,
+    #[route("/activity")]
+    Activity,
 }
 
-#[inline_props]
-fn Blog(cx: Scope, id: i32) -> Element {
+#[component]
+fn Activity(cx: Scope,) -> Element {
     render! {
-        Link { to: Route::Home {}, "Go to counter" }
-        "Blog post {id}"
+        Link { to: Route::Home {}, "Go back home" }
+        "Activity"
     }
 }
 
-#[inline_props]
-fn Home(cx: Scope) -> Element {
-    let mut count = use_state(cx, || 0);
+#[component]
+fn Explore(cx: Scope,) -> Element {
+    render! {
+        Link { to: Route::Home {}, "Go back home" }
+        "Explore"
+    }
+}
 
+
+#[component]
+fn Nav(cx: Scope) -> Element {
     cx.render(rsx! {
-        Link {
-            to: Route::Blog {
-                id: *count.get()
-            },
-            "Go to blog"
-        }
-        div {
-            h1 { "High-Five counter: {count}" }
-            button { onclick: move |_| count += 1, "Up high!" }
-            button { onclick: move |_| count -= 1, "Down low!" }
-
+        NavigationRail { 
+            NavItem { route: Route::Home, label: "Home" }
+            NavItem { route: Route::Explore, label: "Explore" }
+            NavItem { route: Route::Activity, label: "Activity" }
         }
     })
+}
+
+#[component]
+fn NavItem<'a>(cx: Scope<'a>, route: Route, label: &'a str) -> Element<'a> {
+    let navigator = use_navigator(cx);
+    let current_route: Option<Route> = use_route(cx);
+    
+
+    let is_selected = current_route.as_ref() == Some(route);
+    render!(
+        NavigationRailItem {
+            icon: render!("A"),
+            label: render!("{label}"),
+            is_selected: is_selected,
+            onselect: move |_| {
+                if !is_selected {
+                    navigator.push(route.clone());
+                }
+            }
+        }
+    )
+
+  
+}
+
+#[component]
+fn Home(cx: Scope) -> Element {
+    
+    
+    cx.render(rsx! { h1 { "Home!" } })
 }
