@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Matt Hunzinger <matthunz2@gmail.com>"]
 edition = "2021"
 
+[features]
+lookbook = ["dep:lookbook"]
+
 [dependencies]
 dioxus = { git = "https://github.com/ealmloff/dioxus", branch = "fix-signals-outside-of-runtime" }
 dioxus-web = { git = "https://github.com/ealmloff/dioxus", branch = "fix-signals-outside-of-runtime" }
@@ -11,10 +14,10 @@ dioxus-signals = { git = "https://github.com/ealmloff/dioxus", branch = "fix-sig
 dioxus-router = { git = "https://github.com/ealmloff/dioxus", branch = "fix-signals-outside-of-runtime", features = ["web"] }
 dioxus-material = { git = "https://github.com/matthunz/dioxus-material" }
 
+lookbook = { git = "https://github.com/matthunz/lookbook", optional = true }
 
 # Debug
 log = "0.4.19"
 dioxus-logger = "0.4.1"
-
 console_error_panic_hook = "0.1.7"
 
