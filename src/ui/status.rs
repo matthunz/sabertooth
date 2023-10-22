@@ -1,26 +1,54 @@
 use dioxus::prelude::*;
 use dioxus_material::{use_theme, Icon, IconKind};
 
+/// Status component.
 #[component]
 pub fn Status<'a>(
     cx: Scope<'a>,
+
+    /// Username of the account who posted the status.
     username: &'a str,
+
+    /// Avatar URI of the account who posted the status.
     avatar_uri: &'a str,
+
+    /// Timestamp the status was posted.
     timestamp: &'a str,
+
+    /// HTML content of the status.
     content: &'a str,
+
+    /// Amount of favorites the status received.
     favorites_count: u32,
+
+    /// True if the current user favorited the status.
     is_favorited: bool,
+
+    /// Handler of click events for the favorite action.
     onfavorite: EventHandler<'a>,
 
-    reposts_count: u32,
-    is_reposted: bool,
-    onrepost: EventHandler<'a>,
+    /// Amount of reblogs the status received.
+    reblogs_count: u32,
+    
+    /// True if the current user reblogged the status.
+    is_reblogged: bool,
 
+    /// Handler of click events for the reblog action.
+    onreblog: EventHandler<'a>,
+
+    /// Amount of replies the status received.
     replies_count: u32,
+
+    /// True if the current user replied to the status.
     is_replied: bool,
+
+    /// Handler of click events for the reply action.
     onreply: EventHandler<'a>,
 
+    /// True if the current user bookmarked the status.
     is_bookmarked: bool,
+
+    /// Handler of click events for the bookmark action.
     onbookmark: EventHandler<'a>,
 ) -> Element<'a> {
     let theme = use_theme(cx);
@@ -64,23 +92,23 @@ pub fn Status<'a>(
                     margin: "10px 0",
                     padding: 0,
                     list_style: "none",
-                    CountAction {
+                    Action {
                         icon: IconKind::Favorite,
                         count: *favorites_count,
                         is_active: *is_favorited,
                         onclick: |_| onfavorite.call(())
                     }
-                    CountAction {
+                    Action {
                         icon: IconKind::Reply,
                         count: *replies_count,
                         is_active: *is_replied,
                         onclick: |_| onreply.call(())
                     }
-                    CountAction {
+                    Action {
                         icon: IconKind::Forward,
-                        count: *reposts_count,
-                        is_active: *is_reposted,
-                        onclick: |_| onrepost.call(())
+                        count: *reblogs_count,
+                        is_active: *is_reblogged,
+                        onclick: |_| onreblog.call(())
                     }
 
                     li { color: if *is_bookmarked { &theme.primary_color } else { "inherit" }, cursor: "pointer", onclick: |_| onbookmark.call(()),
@@ -92,8 +120,9 @@ pub fn Status<'a>(
     )
 }
 
+/// Action button component.
 #[component]
-fn CountAction<'a>(
+fn Action<'a>(
     cx: Scope<'a>,
     icon: IconKind,
     count: u32,
@@ -137,9 +166,9 @@ pub fn StatusPreview(cx: Scope) -> Element {
                 replies_count: 32,
                 is_replied: **is_replied,
                 onreply: move |_| is_replied.set(!is_replied),
-                reposts_count: 112,
-                is_reposted: **is_reposted,
-                onrepost: move |_| is_reposted.set(!is_reposted),
+                reblogs_count: 112,
+                is_reblogged: **is_reposted,
+                onreblog: move |_| is_reposted.set(!is_reposted),
                 is_bookmarked: **is_bookmarked,
                 onbookmark: move |_| is_bookmarked.set(!is_bookmarked)
             }

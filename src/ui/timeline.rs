@@ -1,10 +1,9 @@
-use crate::{ui::Status, api::StatusData};
+use crate::{api::StatusData, ui::Status};
 use dioxus::prelude::*;
-use dioxus_signals::{use_signal, Signal};
 
 #[component]
 pub fn Timeline<'a>(cx: Scope, statuses: &'a [StatusData]) -> Element {
-    cx.render(rsx! {
+    render!(
         ul { width: "100%", max_width: "400px", margin: "auto", padding: 0, overflow_y: "auto",
             statuses.into_iter().map(|status| render!(Status {
                 username: "{status.account.username}",
@@ -17,12 +16,12 @@ pub fn Timeline<'a>(cx: Scope, statuses: &'a [StatusData]) -> Element {
                 replies_count: status.replies_count,
                 is_replied: false,
                 onreply:  |_| {},
-                reposts_count: status.reblogs_count,
-                is_reposted: false,
-                onrepost: |_| {},
+                reblogs_count: status.reblogs_count,
+                is_reblogged: false,
+                onreblog: |_| {},
                 is_bookmarked: false,
                 onbookmark:  |_| {},
             }))
         }
-    })
+    )
 }
