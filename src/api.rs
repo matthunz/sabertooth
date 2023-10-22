@@ -13,8 +13,14 @@ pub struct StatusData {
     pub content: String,
     #[serde(rename = "favourites_count")]
     pub favorites_count: u32,
+    #[serde(rename = "favourited", default)]
+    pub is_favorited: bool,
     pub reblogs_count: u32,
+    #[serde(rename = "reblogged", default)]
+    pub is_reblogged: bool,
     pub replies_count: u32,
+    #[serde(rename = "replied", default)]
+    pub is_replied: bool,
 }
 
 pub async fn get_timeline() -> Vec<StatusData> {

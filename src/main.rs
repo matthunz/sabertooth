@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use dioxus_material::{Icon, IconFont, IconKind, NavigationRail, NavigationRailItem, Theme};
+use dioxus_material::{Icon, IconFont, IconKind, NavigationRail, NavigationRailItem};
 use dioxus_router::prelude::*;
 use dioxus_signals::use_signal;
 use std::rc::Rc;
@@ -8,14 +8,13 @@ mod api;
 use self::api::get_timeline;
 
 mod ui;
-use self::ui::Timeline;
-use self::ui::{Login, Server};
+use self::ui::{Login, Server, Timeline};
 
 #[cfg(not(feature = "lookbook"))]
 fn main() {
     fn app(cx: Scope) -> Element {
         render! {
-            Theme { Router::<Route> {} }
+            dioxus_material::Theme { Router::<Route> {} }
         }
     }
 
@@ -137,7 +136,15 @@ fn Home(cx: Scope) -> Element {
 
     let statuses_ref = statuses.read();
     if let Some(statuses) = &*statuses_ref {
-        render!( Timeline { statuses: cx.bump().alloc(statuses.clone()) } )
+        render!(
+            Timeline {
+                statuses: cx.bump().alloc(statuses.clone()),
+                onfavorite: |_| {},
+                onreply: |_| {},
+                onreblog: |_| {},
+                onbookmark: |_| {}
+            }
+        )
     } else {
         None
     }
