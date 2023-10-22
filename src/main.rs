@@ -3,14 +3,23 @@ use dioxus_material::{Icon, IconFont, IconKind, NavigationRail, NavigationRailIt
 use dioxus_router::prelude::*;
 use dioxus_signals::use_signal;
 use serde::Deserialize;
+use std::rc::Rc;
+
+mod api;
+use self::api::get_timeline;
 
 mod ui;
-use crate::ui::Status;
-
 use self::ui::{Login, Server};
+use self::ui::{Status, Timeline};
 
 #[cfg(not(feature = "lookbook"))]
 fn main() {
+    fn app(cx: Scope) -> Element {
+        render! {
+            Theme { Router::<Route> {} }
+        }
+    }
+
     dioxus_logger::init(log::LevelFilter::Info).expect("failed to init logger");
     console_error_panic_hook::set_once();
 
@@ -31,12 +40,6 @@ fn main() {
     }
 
     dioxus_web::launch(app);
-}
-
-fn app(cx: Scope) -> Element {
-    render! {
-        Theme { Router::<Route> {} }
-    }
 }
 
 #[derive(Clone, Routable, Debug, PartialEq)]
@@ -95,7 +98,7 @@ fn Wrap(cx: Scope) -> Element {
             font_family: "sans-serif",
             overflow: "hidden",
             padding: 0,
-            NavigationRail { 
+            NavigationRail {
                 NavItem { route: Route::Home, icon: IconKind::Home, label: "Home" }
                 NavItem { route: Route::Explore, icon: IconKind::Explore, label: "Explore" }
                 NavItem { route: Route::Activity, icon: IconKind::Notifications, label: "Activity" }
@@ -111,18 +114,16 @@ fn NavItem<'a>(cx: Scope<'a>, route: Route, icon: IconKind, label: &'a str) -> E
     let current_route: Option<Route> = use_route(cx);
 
     let is_selected = current_route.as_ref() == Some(route);
-    render!(
-        NavigationRailItem {
-            icon: render!(Icon { kind : * icon }),
-            label: render!("{label}"),
-            is_selected: is_selected,
-            onselect: move |_| {
-                if !is_selected {
-                    navigator.push(route.clone());
-                }
+    render!(NavigationRailItem {
+        icon: render!(Icon { kind: *icon }),
+        label: render!("{label}"),
+        is_selected: is_selected,
+        onselect: move |_| {
+            if !is_selected {
+                navigator.push(route.clone());
             }
         }
-    )
+    })
 }
 
 #[component]
@@ -130,55 +131,15 @@ fn Home(cx: Scope) -> Element {
     let statuses = use_signal(cx, || None);
     use_effect(cx, (), |()| async move {
         let timeline = get_timeline().await;
-        statuses.set(Some(timeline));
+        statuses.set(Some(Rc::new(timeline)));
     });
 
-
-    cx.render(rsx! {
-        ul { width: "100%", max_width: "400px", margin: "auto", padding: 0, overflow_y: "auto",
-            statuses.read().iter().flatten().map(|status| render!(Status {
-                username: "{status.account.username}",
-                avatar_uri: "{status.account.avatar}",
-                timestamp: "2d",
-                content: "{status.content}",
-                favorites_count: status.favorites_count,
-                is_favorited: false,
-                onfavorite: |_| {},
-                replies_count: status.replies_count,
-                is_replied: false,
-                onreply:  |_| {},
-                reposts_count: status.reblogs_count,
-                is_reposted: false,
-                onrepost: |_| {},
-                is_bookmarked: false,
-                onbookmark:  |_| {},
-            }))
-        }
-    })
-}
-
-#[derive(Debug, Deserialize)]
-struct Account {
-    username: String,
-    avatar: String
-}
-
-#[derive(Debug, Deserialize)]
-struct StatusData {
-    id: String,
-    account: Account,
-    content: String,
-    #[serde(rename = "favourites_count")]
-    favorites_count: u32,
-    reblogs_count: u32,
-    replies_count: u32,
-}
-
-async fn get_timeline() -> Vec<StatusData> {
-     reqwest::get("https://mas.to/api/v1/timelines/public")
-        .await
-        .unwrap()
-        .json()
-        .await
-        .unwrap()
+    let statuses_ref = statuses.read();
+    if let Some(statuses) = &*statuses_ref {
+        render!(Timeline {
+            statuses: cx.bump().alloc(statuses.clone())
+        })
+    } else {
+        None
+    }
 }
