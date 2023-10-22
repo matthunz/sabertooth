@@ -7,3 +7,8 @@ mod server;
 pub use server::Server;
 #[cfg(feature = "lookbook")]
 pub use server::ServerPreview;
+
+mod status;
+pub use status::Status;
+#[cfg(feature = "lookbook")]
+pub use status::StatusPreview;

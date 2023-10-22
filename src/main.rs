@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use dioxus_material::{NavigationRail, NavigationRailItem, Theme, IconKind, Icon, IconFont};
+use dioxus_material::{Icon, IconFont, IconKind, NavigationRail, NavigationRailItem, Theme};
 use dioxus_router::prelude::*;
 
 mod ui;
@@ -17,7 +17,13 @@ fn main() {
 #[cfg(feature = "lookbook")]
 fn main() {
     fn app(cx: Scope) -> Element {
-        render! {lookbook::LookBook { home: Home, previews: [ui::LoginPreview, ui::ServerPreview] }}
+        render! {
+            IconFont {}
+            lookbook::LookBook {
+                home: Home,
+                previews: [ui::LoginPreview, ui::ServerPreview, ui::StatusPreview]
+            }
+        }
     }
 
     dioxus_web::launch(app);
@@ -75,7 +81,7 @@ fn Wrap(cx: Scope) -> Element {
     cx.render(rsx! {
         IconFont {}
         div { width: "100vw", height: "100vh", display: "flex", flex_direction: "row", font_family: "sans-serif",
-            NavigationRail {
+            NavigationRail { 
                 NavItem { route: Route::Home, icon: IconKind::Home, label: "Home" }
                 NavItem { route: Route::Explore, icon: IconKind::Explore, label: "Explore" }
                 NavItem { route: Route::Activity, icon: IconKind::Notifications, label: "Activity" }
