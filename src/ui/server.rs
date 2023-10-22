@@ -29,5 +29,5 @@ pub fn Server<'a>(cx: Scope<'a>, onselect: EventHandler<'a, &'a str>) -> Element
 #[cfg(feature = "lookbook")]
 #[lookbook::preview]
 pub fn ServerPreview(cx: Scope) -> Element {
-    render!(Server { onselect: |_| {} })
+    render!( Server { onselect: |_| {} } )
 }

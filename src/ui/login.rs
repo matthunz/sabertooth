@@ -26,7 +26,5 @@ pub fn Login(cx: Scope, server_uri: String) -> Element {
 #[cfg(feature = "lookbook")]
 #[lookbook::preview]
 pub fn LoginPreview(cx: Scope) -> Element {
-    render!(Login {
-        server_uri: String::from("https://example.com")
-    })
+    render!( Login { server_uri: String::from("https://example.com") } )
 }

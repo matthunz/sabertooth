@@ -97,16 +97,18 @@ fn NavItem<'a>(cx: Scope<'a>, route: Route, icon: IconKind, label: &'a str) -> E
     let current_route: Option<Route> = use_route(cx);
 
     let is_selected = current_route.as_ref() == Some(route);
-    render!(NavigationRailItem {
-        icon: render!(Icon { kind: *icon }),
-        label: render!("{label}"),
-        is_selected: is_selected,
-        onselect: move |_| {
-            if !is_selected {
-                navigator.push(route.clone());
+    render!(
+        NavigationRailItem {
+            icon: render!(Icon { kind : * icon }),
+            label: render!("{label}"),
+            is_selected: is_selected,
+            onselect: move |_| {
+                if !is_selected {
+                    navigator.push(route.clone());
+                }
             }
         }
-    })
+    )
 }
 
 #[component]
