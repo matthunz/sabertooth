@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use dioxus_material::{NavigationRail, NavigationRailItem, Theme};
+use dioxus_material::{NavigationRail, NavigationRailItem, Theme, IconKind, Icon, IconFont};
 use dioxus_router::prelude::*;
 
 mod ui;
@@ -7,7 +7,7 @@ use self::ui::{Login, Server};
 
 #[cfg(not(feature = "lookbook"))]
 fn main() {
-    dioxus_logger::init(LevelFilter::Info).expect("failed to init logger");
+    dioxus_logger::init(log::LevelFilter::Info).expect("failed to init logger");
     console_error_panic_hook::set_once();
 
     log::info!("starting app");
@@ -31,7 +31,7 @@ fn app(cx: Scope) -> Element {
 
 #[derive(Clone, Routable, Debug, PartialEq)]
 enum Route {
-    #[layout(Nav)]
+    #[layout(Wrap)]
     #[route("/")]
     Home,
 
@@ -71,13 +71,14 @@ fn Explore(cx: Scope) -> Element {
 }
 
 #[component]
-fn Nav(cx: Scope) -> Element {
+fn Wrap(cx: Scope) -> Element {
     cx.render(rsx! {
-        div { width: "100vw", height: "100vh", display: "flex", flex_direction: "row",
+        IconFont {}
+        div { width: "100vw", height: "100vh", display: "flex", flex_direction: "row", font_family: "sans-serif",
             NavigationRail {
-                NavItem { route: Route::Home, label: "Home" }
-                NavItem { route: Route::Explore, label: "Explore" }
-                NavItem { route: Route::Activity, label: "Activity" }
+                NavItem { route: Route::Home, icon: IconKind::Home, label: "Home" }
+                NavItem { route: Route::Explore, icon: IconKind::Explore, label: "Explore" }
+                NavItem { route: Route::Activity, icon: IconKind::Notifications, label: "Activity" }
             }
             Outlet::<Route> {}
         }
@@ -85,13 +86,13 @@ fn Nav(cx: Scope) -> Element {
 }
 
 #[component]
-fn NavItem<'a>(cx: Scope<'a>, route: Route, label: &'a str) -> Element<'a> {
+fn NavItem<'a>(cx: Scope<'a>, route: Route, icon: IconKind, label: &'a str) -> Element<'a> {
     let navigator = use_navigator(cx);
     let current_route: Option<Route> = use_route(cx);
 
     let is_selected = current_route.as_ref() == Some(route);
     render!(NavigationRailItem {
-        icon: render!("A"),
+        icon: render!(Icon { kind: *icon }),
         label: render!("{label}"),
         is_selected: is_selected,
         onselect: move |_| {
