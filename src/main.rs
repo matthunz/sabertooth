@@ -84,7 +84,17 @@ fn Explore(cx: Scope) -> Element {
 fn Wrap(cx: Scope) -> Element {
     cx.render(rsx! {
         IconFont {}
-        div { width: "100vw", height: "100vh", display: "flex", flex_direction: "row", font_family: "sans-serif",
+        div {
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            display: "flex",
+            flex_direction: "row",
+            font_family: "sans-serif",
+            overflow: "hidden",
+            padding: 0,
             NavigationRail { 
                 NavItem { route: Route::Home, icon: IconKind::Home, label: "Home" }
                 NavItem { route: Route::Explore, icon: IconKind::Explore, label: "Explore" }
