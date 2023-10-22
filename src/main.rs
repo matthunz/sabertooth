@@ -1,8 +1,12 @@
 use dioxus::prelude::*;
 use dioxus_material::{Icon, IconFont, IconKind, NavigationRail, NavigationRailItem, Theme};
 use dioxus_router::prelude::*;
+use dioxus_signals::use_signal;
+use serde::Deserialize;
 
 mod ui;
+use crate::ui::Status;
+
 use self::ui::{Login, Server};
 
 #[cfg(not(feature = "lookbook"))]
@@ -86,7 +90,7 @@ fn Wrap(cx: Scope) -> Element {
                 NavItem { route: Route::Explore, icon: IconKind::Explore, label: "Explore" }
                 NavItem { route: Route::Activity, icon: IconKind::Notifications, label: "Activity" }
             }
-            Outlet::<Route> {}
+            div { flex: 1, overflow: "auto", Outlet::<Route> {} }
         }
     })
 }
@@ -113,5 +117,58 @@ fn NavItem<'a>(cx: Scope<'a>, route: Route, icon: IconKind, label: &'a str) -> E
 
 #[component]
 fn Home(cx: Scope) -> Element {
-    cx.render(rsx! { h1 { "Home!" } })
+    let statuses = use_signal(cx, || None);
+    use_effect(cx, (), |()| async move {
+        let timeline = get_timeline().await;
+        statuses.set(Some(timeline));
+    });
+
+
+    cx.render(rsx! {
+        ul { width: "100%", max_width: "400px", margin: "auto", padding: 0, overflow_y: "auto",
+            statuses.read().iter().flatten().map(|status| render!(Status {
+                username: "{status.account.username}",
+                avatar_uri: "{status.account.avatar}",
+                timestamp: "2d",
+                content: "{status.content}",
+                favorites_count: status.favorites_count,
+                is_favorited: false,
+                onfavorite: |_| {},
+                replies_count: status.replies_count,
+                is_replied: false,
+                onreply:  |_| {},
+                reposts_count: status.reblogs_count,
+                is_reposted: false,
+                onrepost: |_| {},
+                is_bookmarked: false,
+                onbookmark:  |_| {},
+            }))
+        }
+    })
+}
+
+#[derive(Debug, Deserialize)]
+struct Account {
+    username: String,
+    avatar: String
+}
+
+#[derive(Debug, Deserialize)]
+struct StatusData {
+    id: String,
+    account: Account,
+    content: String,
+    #[serde(rename = "favourites_count")]
+    favorites_count: u32,
+    reblogs_count: u32,
+    replies_count: u32,
+}
+
+async fn get_timeline() -> Vec<StatusData> {
+     reqwest::get("https://mas.to/api/v1/timelines/public")
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap()
 }

@@ -5,6 +5,7 @@ use dioxus_material::{use_theme, Icon, IconKind};
 pub fn Status<'a>(
     cx: Scope<'a>,
     username: &'a str,
+    avatar_uri: &'a str,
     timestamp: &'a str,
     content: &'a str,
     favorites_count: u32,
@@ -25,16 +26,21 @@ pub fn Status<'a>(
     let theme = use_theme(cx);
 
     render!(
-        li { display: "flex", flex_direction: "row", gap: "10px", list_style: "none",
-            div { display: "flex", flex_direction: "column", align_items: "center",
-                div {
-                    width: "30px",
-                    height: "30px",
-                    border_radius: "50%",
-                    background_image: "url('https://avatars.githubusercontent.com/u/9288430?v=4')",
-                    background_size: "contain"
-                }
-            }
+        li {
+            display: "flex",
+            flex_direction: "row",
+            gap: "10px",
+            list_style: "none",
+            padding: "10px 0",
+            border_bottom: "2px solid #eee",
+            overflow: "hidden",
+            div { display: "flex", flex_direction: "column", align_items: "center", div {
+                width: "30px",
+                height: "30px",
+                border_radius: "50%",
+                background_image: "url('{avatar_uri}')",
+                background_size: "contain"
+            } }
 
             div { flex: 1, display: "flex", flex_direction: "column",
                 div { flex: 1, display: "flex", flex_direction: "row", align_items: "center", margin_bottom: "5px",
@@ -49,7 +55,8 @@ pub fn Status<'a>(
                         Icon { kind: IconKind::MoreHoriz }
                     }
                 }
-                "{content}"
+
+                div { dangerous_inner_html: "{content}" }
                 ul {
                     display: "flex",
                     flex_direction: "row",
@@ -121,6 +128,7 @@ pub fn StatusPreview(cx: Scope) -> Element {
         ul { width: "100%", max_width: "400px",
             Status {
                 username: "matthunz",
+                avatar_uri: "https://avatars.githubusercontent.com/u/9288430?v=4",
                 timestamp: "2d",
                 content: "Hello World!",
                 favorites_count: 827,
