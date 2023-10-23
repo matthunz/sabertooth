@@ -2,6 +2,7 @@ use dioxus::prelude::*;
 use dioxus_material::{Icon, IconFont, IconKind, NavigationRail, NavigationRailItem};
 use dioxus_router::prelude::*;
 use dioxus_signals::use_signal;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 mod api;
@@ -96,7 +97,7 @@ fn Wrap(cx: Scope) -> Element {
             font_family: "sans-serif",
             overflow: "hidden",
             padding: 0,
-            NavigationRail { 
+            NavigationRail {
                 NavItem { route: Route::Home, icon: IconKind::Home, label: "Home" }
                 NavItem { route: Route::Explore, icon: IconKind::Explore, label: "Explore" }
                 NavItem { route: Route::Activity, icon: IconKind::Notifications, label: "Activity" }
@@ -112,39 +113,42 @@ fn NavItem<'a>(cx: Scope<'a>, route: Route, icon: IconKind, label: &'a str) -> E
     let current_route: Option<Route> = use_route(cx);
 
     let is_selected = current_route.as_ref() == Some(route);
-    render!(
-        NavigationRailItem {
-            icon: render!(Icon { kind : * icon }),
-            label: render!("{label}"),
-            is_selected: is_selected,
-            onselect: move |_| {
-                if !is_selected {
-                    navigator.push(route.clone());
-                }
+    render!(NavigationRailItem {
+        icon: render!(Icon { kind: *icon }),
+        label: render!("{label}"),
+        is_selected: is_selected,
+        onselect: move |_| {
+            if !is_selected {
+                navigator.push(route.clone());
             }
         }
-    )
+    })
 }
 
 #[component]
 fn Home(cx: Scope) -> Element {
-    let statuses = use_signal(cx, || None);
+    let statuses_signal = use_signal(cx, || HashMap::new());
+    let timeline_signal = use_signal(cx, || None);
+
     use_effect(cx, (), |()| async move {
         let timeline = get_timeline().await;
-        statuses.set(Some(Rc::new(timeline)));
+        for status in timeline.iter() {
+            statuses_signal
+                .write()
+                .insert(status.id.clone(), status.clone());
+        }
+        timeline_signal.set(Some(Rc::new(timeline)));
     });
 
-    let statuses_ref = statuses.read();
-    if let Some(statuses) = &*statuses_ref {
-        render!(
-            Timeline {
-                statuses: cx.bump().alloc(statuses.clone()),
-                onfavorite: |_| {},
-                onreply: |_| {},
-                onreblog: |_| {},
-                onbookmark: |_| {}
-            }
-        )
+    let timeline_ref = timeline_signal.read();
+    if let Some(timeline) = &*timeline_ref {
+        render!(Timeline {
+            statuses: cx.bump().alloc(timeline.clone()),
+            onfavorite: |_| {},
+            onreply: |_| {},
+            onreblog: |_| {},
+            onbookmark: |_| {}
+        })
     } else {
         None
     }
