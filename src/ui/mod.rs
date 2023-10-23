@@ -13,5 +13,8 @@ pub use status::Status;
 #[cfg(feature = "lookbook")]
 pub use status::StatusPreview;
 
+mod status_list;
+pub use status_list::StatusList;
+
 mod timeline;
 pub use timeline::Timeline;

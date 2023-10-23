@@ -5,10 +5,12 @@ use dioxus_signals::use_signal;
 use std::collections::HashMap;
 
 mod api;
+use crate::ui::Timeline;
+
 use self::api::get_timeline;
 
 mod ui;
-use self::ui::{Login, Server, Timeline};
+use self::ui::{Login, Server, StatusList};
 
 #[cfg(not(feature = "lookbook"))]
 fn main() {
@@ -31,7 +33,7 @@ fn main() {
         render! {
             IconFont {}
             lookbook::LookBook {
-                home: Home,
+                home: |cx| render!("Home"),
                 previews: [ui::LoginPreview, ui::ServerPreview, ui::StatusPreview]
             }
         }
@@ -44,13 +46,13 @@ fn main() {
 enum Route {
     #[layout(Wrap)]
     #[route("/")]
-    Home,
+    HomeScreen,
 
     #[route("/explore")]
-    Explore,
+    ExploreScreen,
 
     #[route("/activity")]
-    Activity,
+    ActivityScreen,
 
     #[route("/server")]
     ServerScreen,
@@ -60,7 +62,17 @@ enum Route {
 }
 
 #[component]
-fn Activity(cx: Scope) -> Element {
+fn HomeScreen(cx: Scope) -> Element {
+    let navigator = use_navigator(cx);
+    use_effect(cx, (), move |_| {
+        navigator.push(Route::ExploreScreen);
+        async {}
+    });
+    render!("Home")
+}
+
+#[component]
+fn ActivityScreen(cx: Scope) -> Element {
     render!("Activity")
 }
 
@@ -82,15 +94,23 @@ fn ServerScreen(cx: Scope) -> Element {
 }
 
 #[component]
-fn Explore(cx: Scope) -> Element {
-    render! {
-        Link { to: Route::Home {}, "Go back home" }
-        "Explore"
-    }
+fn ExploreScreen(cx: Scope) -> Element {
+    let statuses = use_signal(cx, || HashMap::new());
+    render!(Timeline {
+        statuses: statuses,
+        id: String::from("public")
+    })
 }
 
 #[component]
 fn Wrap(cx: Scope) -> Element {
+    let username = use_state(cx, || None::<String>);
+    let account_label = if let Some(username) = &**username {
+        username
+    } else {
+        "Sign in"
+    };
+
     cx.render(rsx! {
         IconFont {}
         div {
@@ -105,10 +125,14 @@ fn Wrap(cx: Scope) -> Element {
             overflow: "hidden",
             padding: 0,
             NavigationRail {
-                NavItem { route: Route::ServerScreen, icon: IconKind::Person, label: "Account" }
-                NavItem { route: Route::Home, icon: IconKind::Home, label: "Home" }
-                NavItem { route: Route::Explore, icon: IconKind::Explore, label: "Explore" }
-                NavItem { route: Route::Activity, icon: IconKind::Notifications, label: "Activity" }
+                NavItem { route: Route::ServerScreen, icon: IconKind::Person, label: account_label }
+                NavItem { route: Route::HomeScreen, icon: IconKind::Home, label: "Home" }
+                NavItem { route: Route::ExploreScreen, icon: IconKind::Explore, label: "Explore" }
+                NavItem {
+                    route: Route::ActivityScreen,
+                    icon: IconKind::Notifications,
+                    label: "Activity"
+                }
             }
             div { flex: 1, overflow: "auto", Outlet::<Route> {} }
         }
@@ -132,61 +156,4 @@ fn NavItem<'a>(cx: Scope<'a>, route: Route, icon: IconKind, label: &'a str) -> E
             }
         }
     })
-}
-
-#[component]
-fn Home(cx: Scope) -> Element {
-    let statuses_signal = use_signal(cx, || HashMap::new());
-    let timeline_signal = use_signal(cx, || None);
-
-    use_effect(cx, (), |()| async move {
-        let timeline = get_timeline().await;
-        let mut status_ids = Vec::new();
-        for status in timeline.into_iter() {
-            status_ids.push(status.id.clone());
-            statuses_signal.write().insert(status.id.clone(), status);
-        }
-        timeline_signal.set(Some(status_ids));
-    });
-
-    let timeline = use_memo(
-        cx,
-        (&*statuses_signal.read(), &*timeline_signal.read()),
-        move |_| {
-            let statuses = statuses_signal.read();
-            timeline_signal.read().as_ref().map(|ids| {
-                ids.iter()
-                    .map(|id| statuses.get(id).unwrap().clone())
-                    .collect::<Vec<_>>()
-            })
-        },
-    );
-
-    if let Some(timeline) = timeline {
-        render!(Timeline {
-            statuses: timeline,
-            onfavorite: move |id| {
-                let mut statuses = statuses_signal.write();
-                let status = statuses.get_mut(&id).unwrap();
-                status.is_favorited = !status.is_favorited;
-            },
-            onreply: move |id| {
-                let mut statuses = statuses_signal.write();
-                let status = statuses.get_mut(&id).unwrap();
-                status.is_replied = !status.is_replied;
-            },
-            onreblog: move |id| {
-                let mut statuses = statuses_signal.write();
-                let status = statuses.get_mut(&id).unwrap();
-                status.is_reblogged = !status.is_reblogged;
-            },
-            onbookmark: move |id| {
-                let mut statuses = statuses_signal.write();
-                let status = statuses.get_mut(&id).unwrap();
-                status.is_bookmarked = !status.is_bookmarked;
-            }
-        })
-    } else {
-        None
-    }
 }

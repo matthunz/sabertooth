@@ -25,8 +25,8 @@ pub struct StatusData {
     pub is_bookmarked: bool,
 }
 
-pub async fn get_timeline() -> Vec<StatusData> {
-    reqwest::get("https://mas.to/api/v1/timelines/public")
+pub async fn get_timeline(id: &str) -> Vec<StatusData> {
+    reqwest::get(format!("https://mas.to/api/v1/timelines/{id}"))
         .await
         .unwrap()
         .json()
