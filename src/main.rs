@@ -3,7 +3,6 @@ use dioxus_material::{Icon, IconFont, IconKind, NavigationRail, NavigationRailIt
 use dioxus_router::prelude::*;
 use dioxus_signals::use_signal;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 mod api;
 use self::api::get_timeline;
@@ -53,12 +52,20 @@ enum Route {
     #[route("/activity")]
     Activity,
 
+    #[route("/server")]
+    ServerScreen,
+
     #[route("/login/:server_uri")]
     Login { server_uri: String },
 }
 
 #[component]
 fn Activity(cx: Scope) -> Element {
+    render!("Activity")
+}
+
+#[component]
+fn ServerScreen(cx: Scope) -> Element {
     let navigator = use_navigator(cx);
     let _server_uri = use_state(cx, || String::new());
 
@@ -98,6 +105,7 @@ fn Wrap(cx: Scope) -> Element {
             overflow: "hidden",
             padding: 0,
             NavigationRail {
+                NavItem { route: Route::ServerScreen, icon: IconKind::Person, label: "Account" }
                 NavItem { route: Route::Home, icon: IconKind::Home, label: "Home" }
                 NavItem { route: Route::Explore, icon: IconKind::Explore, label: "Explore" }
                 NavItem { route: Route::Activity, icon: IconKind::Notifications, label: "Activity" }
@@ -110,9 +118,10 @@ fn Wrap(cx: Scope) -> Element {
 #[component]
 fn NavItem<'a>(cx: Scope<'a>, route: Route, icon: IconKind, label: &'a str) -> Element<'a> {
     let navigator = use_navigator(cx);
-    let current_route: Option<Route> = use_route(cx);
 
+    let current_route: Option<Route> = use_route(cx);
     let is_selected = current_route.as_ref() == Some(route);
+
     render!(NavigationRailItem {
         icon: render!(Icon { kind: *icon }),
         label: render!("{label}"),
@@ -132,22 +141,50 @@ fn Home(cx: Scope) -> Element {
 
     use_effect(cx, (), |()| async move {
         let timeline = get_timeline().await;
-        for status in timeline.iter() {
-            statuses_signal
-                .write()
-                .insert(status.id.clone(), status.clone());
+        let mut status_ids = Vec::new();
+        for status in timeline.into_iter() {
+            status_ids.push(status.id.clone());
+            statuses_signal.write().insert(status.id.clone(), status);
         }
-        timeline_signal.set(Some(Rc::new(timeline)));
+        timeline_signal.set(Some(status_ids));
     });
 
-    let timeline_ref = timeline_signal.read();
-    if let Some(timeline) = &*timeline_ref {
+    let timeline = use_memo(
+        cx,
+        (&*statuses_signal.read(), &*timeline_signal.read()),
+        move |_| {
+            let statuses = statuses_signal.read();
+            timeline_signal.read().as_ref().map(|ids| {
+                ids.iter()
+                    .map(|id| statuses.get(id).unwrap().clone())
+                    .collect::<Vec<_>>()
+            })
+        },
+    );
+
+    if let Some(timeline) = timeline {
         render!(Timeline {
-            statuses: cx.bump().alloc(timeline.clone()),
-            onfavorite: |_| {},
-            onreply: |_| {},
-            onreblog: |_| {},
-            onbookmark: |_| {}
+            statuses: timeline,
+            onfavorite: move |id| {
+                let mut statuses = statuses_signal.write();
+                let status = statuses.get_mut(&id).unwrap();
+                status.is_favorited = !status.is_favorited;
+            },
+            onreply: move |id| {
+                let mut statuses = statuses_signal.write();
+                let status = statuses.get_mut(&id).unwrap();
+                status.is_replied = !status.is_replied;
+            },
+            onreblog: move |id| {
+                let mut statuses = statuses_signal.write();
+                let status = statuses.get_mut(&id).unwrap();
+                status.is_reblogged = !status.is_reblogged;
+            },
+            onbookmark: move |id| {
+                let mut statuses = statuses_signal.write();
+                let status = statuses.get_mut(&id).unwrap();
+                status.is_bookmarked = !status.is_bookmarked;
+            }
         })
     } else {
         None

@@ -29,7 +29,7 @@ pub fn Status<'a>(
 
     /// Amount of reblogs the status received.
     reblogs_count: u32,
-    
+
     /// True if the current user reblogged the status.
     is_reblogged: bool,
 

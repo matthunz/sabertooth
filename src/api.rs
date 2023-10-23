@@ -1,12 +1,12 @@
 use serde::Deserialize;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct Account {
     pub username: String,
     pub avatar: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 pub struct StatusData {
     pub id: String,
     pub account: Account,
@@ -21,6 +21,8 @@ pub struct StatusData {
     pub replies_count: u32,
     #[serde(rename = "replied", default)]
     pub is_replied: bool,
+    #[serde(rename = "bookmarked", default)]
+    pub is_bookmarked: bool,
 }
 
 pub async fn get_timeline() -> Vec<StatusData> {

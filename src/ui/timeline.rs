@@ -22,12 +22,12 @@ pub fn Timeline<'a>(
                 is_favorited: status.is_favorited,
                 onfavorite: |_| onfavorite.call(status.id.clone()),
                 replies_count: status.replies_count,
-                is_replied: false,
+                is_replied: status.is_replied,
                 onreply:  |_| onreply.call(status.id.clone()),
                 reblogs_count: status.reblogs_count,
-                is_reblogged: false,
+                is_reblogged: status.is_reblogged,
                 onreblog: |_| onreblog.call(status.id.clone()),
-                is_bookmarked: false,
+                is_bookmarked: status.is_bookmarked,
                 onbookmark:  |_| onbookmark.call(status.id.clone()),
             }))
         }
